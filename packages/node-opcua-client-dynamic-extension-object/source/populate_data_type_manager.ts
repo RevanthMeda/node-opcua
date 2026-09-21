@@ -23,8 +23,7 @@ export async function serverImplementsDataTypeDefinition(session: IBasicSessionA
     const serverCapabilities = (dataValueServerCapabilities.value?.value as string[]) ?? [];
 
     if (serverCapabilities.indexOf(ComplexTypes2017) >= 0) {
-        doDebug && debugLog("server implements ComplexTypes2017");
-        return true;
+        doDebug && debugLog("server advertises ComplexTypes2017; verifying actual DataTypeDefinition support");
     }
 
     // Check if any non-deprecated 1.03 dictionary exists
