@@ -354,6 +354,31 @@ describe("ExtraDataTypeManager Lazy Loading Robust", () => {
         result.should.eql(true);
     });
 
+    it("should verify DataTypeDefinition support even when ComplexTypes2017 is advertised", async () => {
+        const addressSpace = new MockAddressSpace();
+
+        const serverProfileArray = addressSpace.nodes.get(
+            resolveNodeId(VariableIds.Server_ServerCapabilities_ServerProfileArray).toString()
+        )!;
+        serverProfileArray.attributes.set(AttributeIds.Value, [
+            "http://opcfoundation.org/UA-Profile/Server/ComplexTypes2017"
+        ]);
+
+        const customDataTypeNodeId = new NodeId(NodeId.NodeIdType.NUMERIC, 1112, testNamespaceIndex);
+        const customDataType = addressSpace.addNode({
+            nodeId: customDataTypeNodeId,
+            browseName: "LegacyCustomType",
+            nodeClass: NodeClass.DataType
+        });
+        customDataType.attributes.delete(AttributeIds.DataTypeDefinition);
+        addressSpace.addReference(resolveNodeId(DataTypeIds.Structure), "HasSubtype", customDataTypeNodeId);
+
+        const mockSession = createMockSession(addressSpace);
+        const result = await serverImplementsDataTypeDefinition(mockSession as unknown as IBasicSessionAsync2);
+
+        result.should.eql(false);
+    });
+
     it("should lazy load via binary encoding ID", async () => {
         const addressSpace = new MockAddressSpace();
         const dataTypeNodeId = new NodeId(NodeId.NodeIdType.NUMERIC, 1000, testNamespaceIndex);
