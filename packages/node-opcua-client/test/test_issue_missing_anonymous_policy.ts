@@ -13,27 +13,31 @@ interface TokenAndSignature {
     userIdentityToken: AnonymousIdentityToken | null;
 }
 
+interface EndpointLike {
+    securityMode: MessageSecurityMode;
+    userIdentityTokens?: Array<{
+        policyId: string;
+        tokenType: UserTokenType;
+        securityPolicyUri?: string;
+    }>;
+}
+
+interface IdentityContext {
+    endpoint: EndpointLike;
+    securityPolicy: SecurityPolicy;
+    serverCertificate: Buffer;
+    serverNonce: Buffer;
+}
+
 interface InternalClient {
     createUserIdentityToken(
-        context: {
-            endpoint: {
-                securityMode: MessageSecurityMode;
-                userIdentityTokens?: Array<{
-                    policyId: string;
-                    tokenType: UserTokenType;
-                    securityPolicyUri?: string;
-                }>;
-            };
-            securityPolicy: SecurityPolicy;
-            serverCertificate: Buffer;
-            serverNonce: Buffer;
-        },
+        context: IdentityContext,
         userIdentityInfo: { type: UserTokenType },
         callback: (err: Error | null, data?: TokenAndSignature) => void
     ): void;
 }
 
-function createAnonymousToken(endpoint: InternalClient extends { createUserIdentityToken(context: infer C, ...args: any[]): any } ? C["endpoint"] : never) {
+function createAnonymousToken(endpoint: EndpointLike) {
     const client = OPCUAClient.create({}) as unknown as InternalClient;
     return new Promise<AnonymousIdentityToken>((resolve, reject) => {
         client.createUserIdentityToken(
