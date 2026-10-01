@@ -210,6 +210,14 @@ function createAnonymousIdentityToken(context: IdentityTokenContext): AnonymousI
     const endpoint = context.endpoint;
     const userTokenPolicy = findUserTokenPolicy(endpoint, UserTokenType.Anonymous);
     if (!userTokenPolicy) {
+        // Some legacy/non-conforming servers omit userIdentityTokens on an
+        // unsecured endpoint but still accept an anonymous ActivateSession.
+        // Keep this compatibility fallback limited to the only case where no
+        // user secret can be exposed and the endpoint advertises no competing
+        // identity policy.
+        if (endpoint.securityMode === MessageSecurityMode.None && endpoint.userIdentityTokens.length === 0) {
+            return new AnonymousIdentityToken({ policyId: "" });
+        }
         throw new Error("Cannot find ANONYMOUS user token policy in end point description");
     }
     return new AnonymousIdentityToken({ policyId: userTokenPolicy.policyId });
